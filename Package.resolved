@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "SwiftyOpenCC",
+        "repositoryURL": "https://github.com/ddddxxx/SwiftyOpenCC",
+        "state": {
+          "branch": null,
+          "revision": "64a4534c17480b15b87cfa114ffcc5aa26a2d35f",
+          "version": "1.0.1"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
