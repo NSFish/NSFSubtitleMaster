@@ -41,6 +41,10 @@ class Event {
         var text = ""
         for i in 9..<properties.endIndex {
             text += properties[i]
+            
+            if i < properties.endIndex - 1 {
+                text += ","
+            }
         }
         self.text = text
     }

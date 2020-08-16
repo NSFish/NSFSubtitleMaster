@@ -26,9 +26,13 @@ func orgenizeAssFile(at url: URL) throws {
     
     // TODO: 去除 V4+ Styles 中的 STAFF
     // 可以在下面提到的 subtitle_config 中加入一个 remove_staff 的标志来决定是否删除
-    let dialogueLines = lines.filter { $0.hasPrefix("Dialogue:") && !$0.contains("STAFF") }
+    let dialogueLines = lines.filter {
+        return $0.hasPrefix("Dialogue:")
+            && !$0.contains("STAFF")
+    }
     let firstDialogueIndex = lines.firstIndex(of: dialogueLines.first!)!
-    let nonDialogueLines = lines[0..<firstDialogueIndex]
+    // 清除掉原有的 Comment
+    let nonDialogueLines = lines[0..<firstDialogueIndex].filter { !$0.contains("Comment: ") }
     
     let mainDialogueLines = dialogueLines.filter { !$0.contains(",JP,") }
     let secondLanguageDialogueLines = dialogueLines.filter { $0.contains(",JP,") }
@@ -113,7 +117,8 @@ func orgenizeAssFile(at url: URL) throws {
     let OrgenizedLines = nonDialogueLines + orgenizedDialogueLines
     
     let result = OrgenizedLines.joined(separator: "\r\n")
-//    let newFileName = url.deletingPathExtension().appendingPathExtension("new").appendingPathExtension(url.pathExtension).lastPathComponent
-    let fileURL = url//.deletingLastPathComponent().appendingPathComponent(newFileName)
-    try result.write(to: fileURL, atomically: false, encoding: .utf8)
+    let backupFileName = url.deletingPathExtension().appendingPathExtension("backup").appendingPathExtension(url.pathExtension).lastPathComponent
+    let backupURL = url.deletingLastPathComponent().appendingPathComponent(backupFileName)
+    try FileManager.default.moveItem(at: url, to: backupURL)
+    try result.write(to: url, atomically: false, encoding: .utf8)
 }
