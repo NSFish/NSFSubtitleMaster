@@ -19,7 +19,10 @@ func detectSubtitleFilesIn(directory: URL) throws -> [URL] {
 
 func orgenizeAssFile(at url: URL) throws {
     let subtitle = try String(contentsOf: url)
-    let lines = subtitle.components(separatedBy: "\r\n")
+    // 文件中的换行符有的是 \r\n，有的只有 \n，提前做个统一处理
+    let lines = subtitle.replacingOccurrences(of: "\r\n", with: "\n")
+        .replacingOccurrences(of: "\n", with: "\r\n")
+        .components(separatedBy: "\r\n")
     
     // TODO: 去除 V4+ Styles 中的 STAFF
     // 可以在下面提到的 subtitle_config 中加入一个 remove_staff 的标志来决定是否删除
@@ -88,12 +91,13 @@ func orgenizeAssFile(at url: URL) throws {
     let content = mainDialogues.filter { $0.start > OPEnd! && $0.start < EDStart! }
     let ED = mainDialogues.filter { $0.start >= EDStart! && $0.start <= EDEnd! }
     let nextEpisodePreview = mainDialogues.filter { $0.start > EDEnd! }
-        
+    
     let orgenizedDialogues = [Comment(content: "Prologue")] + prologue
         + [Comment(content: "OP")] + OP
         + [Comment(content: "正片")] + content
         + [Comment(content: "ED")] + ED
         + [Comment(content: "下集预告")] + nextEpisodePreview
+        + [Comment(content: "JP")]
     
     let bundleURL = URL.init(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Documents/Github/SwiftyOpenCC/OpenCCDictionary.bundle")
     let bundle = Bundle.init(url: bundleURL)!
