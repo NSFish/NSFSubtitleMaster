@@ -108,7 +108,7 @@ func orgenizeAssFile(at url: URL) throws {
     
     let bundleURL = URL.init(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Documents/Github/SwiftyOpenCC/OpenCCDictionary.bundle")
     let bundle = Bundle.init(url: bundleURL)!
-    let converter = try! ChineseConverter(bundle: bundle, option: [.simplify, .TWStandard, .TWIdiom])
+    let converter = try! ChineseConverter(bundle: bundle, option: [.simplify])
     orgenizedDialogues.forEach { dialogue in
         dialogue.text = converter.convert(dialogue.text)
     }
