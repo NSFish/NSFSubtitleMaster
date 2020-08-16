@@ -31,13 +31,28 @@ func orgenizeAssFile(at url: URL) throws {
             && !$0.contains("STAFF")
     }
     let firstDialogueIndex = lines.firstIndex(of: dialogueLines.first!)!
-    // 清除掉原有的 Comment
-    let nonDialogueLines = lines[0..<firstDialogueIndex].filter { !$0.contains("Comment: ") }
+    // 清除掉注释（通常是字幕组的出品文案）原有的 Comment
+    let nonDialogueLines = lines[0..<firstDialogueIndex].filter {
+        return !$0.contains("Comment: ")
+            && !$0.hasPrefix(";")
+    }
     
-    let mainDialogueLines = dialogueLines.filter { !$0.contains(",JP,") }
-    let secondLanguageDialogueLines = dialogueLines.filter { $0.contains(",JP,") }
+    let mainDialogueLines = dialogueLines.filter {
+        return !$0.contains(",JP,")
+            && !$0.contains(",JP(UP),")
+    }
     
-    let mainDialogues = mainDialogueLines.map { Dialogue(eventLine: $0) }
+    // 第二语言如果也有不同部分，比如金田一中的 JP 和 JP(UP)
+    // 则集成在一起后需要按开始时间排个序
+    var secondLanguageDialogueLines = dialogueLines.filter {
+        return $0.contains(",JP,")
+            || $0.contains(",JP(UP),")
+    }
+    var secondLanguageDialogues = secondLanguageDialogueLines.map { Dialogue(eventLine: $0) }
+    secondLanguageDialogues.sort { d1, d2 -> Bool in
+        return d1.start < d2.start
+    }
+    secondLanguageDialogueLines = secondLanguageDialogues.map { $0.line() }
     
     // TODO: 可以构造一个配置文件，比如 subtitle_config
     // 里面指定需要留下的 style，以及 style 的顺序，然后这里读取
@@ -48,6 +63,8 @@ func orgenizeAssFile(at url: URL) throws {
     // OP?
     // ED
     // CN
+    let mainDialogues = mainDialogueLines.map { Dialogue(eventLine: $0) }
+    
     var OPStart: String?
     var OPEnd: String?
     var EDStart: String?
@@ -106,19 +123,23 @@ func orgenizeAssFile(at url: URL) throws {
     }
     orgenizedDialogues += [Comment(content: "JP")]
     
-    let bundleURL = URL.init(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Documents/Github/SwiftyOpenCC/OpenCCDictionary.bundle")
-    let bundle = Bundle.init(url: bundleURL)!
-    let converter = try! ChineseConverter(bundle: bundle, option: [.simplify])
     orgenizedDialogues.forEach { dialogue in
-        dialogue.text = converter.convert(dialogue.text)
+        dialogue.text = ChineseConverter.shared.convert(dialogue.text)
     }
     let orgenizedDialogueLines = orgenizedDialogues.map { $0.line() } + secondLanguageDialogueLines
     
-    let OrgenizedLines = nonDialogueLines + orgenizedDialogueLines
+    let orgenizedLines = nonDialogueLines + orgenizedDialogueLines
     
-    let result = OrgenizedLines.joined(separator: "\r\n")
-    let backupFileName = url.deletingPathExtension().appendingPathExtension("backup").appendingPathExtension(url.pathExtension).lastPathComponent
-    let backupURL = url.deletingLastPathComponent().appendingPathComponent(backupFileName)
+    // TODO: 支持替换自定义字符
+    // 比如金田一中的 style TITEL -> TITLE
+    let result = orgenizedLines.joined(separator: "\r\n").replacingOccurrences(of: "TITEL", with: "TITLE")
+    // 修改前的字幕文件备份起来，扩展名改成 ssa
+    // 这样既可以和新生成的 .ass 文件区分开来，方便地批量删除
+    // 又可以直接双击在 VS Code 中打开，方便比对
+    let backupURL = url.appendingPathExtension("backup.ssa")
+    if FileManager.default.fileExists(atPath: backupURL.path) {
+        try FileManager.default.removeItem(at: backupURL)
+    }
     try FileManager.default.moveItem(at: url, to: backupURL)
     try result.write(to: url, atomically: false, encoding: .utf8)
 }

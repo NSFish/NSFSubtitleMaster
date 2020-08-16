@@ -13,7 +13,9 @@ enum SubtitleMasterError: Error {
     case dummy
 }
 
-print("Usage: subtitle-master -f");
+if CommandLine.arguments.count > 3 {
+    print("Usage: subtitle-master -f");
+}
 
 var urlString = "", stringToFind = ""
 for (index, argument) in CommandLine.arguments.enumerated() {
@@ -26,11 +28,9 @@ for (index, argument) in CommandLine.arguments.enumerated() {
 }
 
 let url = URL(fileURLWithPath: urlString)
-var isDirectory: ObjCBool = ObjCBool(false)
-FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
 
 do {
-    if isDirectory.boolValue {
+    if url.isDirectory {
         let subtitleFiles = try detectSubtitleFilesIn(directory: url)
         if subtitleFiles.count == 0 {
             print("在指定路径下没有找到任何 .ass 文件")
