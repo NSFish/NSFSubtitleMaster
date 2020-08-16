@@ -92,12 +92,15 @@ func orgenizeAssFile(at url: URL) throws {
     let ED = mainDialogues.filter { $0.start >= EDStart! && $0.start <= EDEnd! }
     let nextEpisodePreview = mainDialogues.filter { $0.start > EDEnd! }
     
-    let orgenizedDialogues = [Comment(content: "Prologue")] + prologue
+    var orgenizedDialogues = [Comment(content: "Prologue")] + prologue
         + [Comment(content: "OP")] + OP
         + [Comment(content: "正片")] + content
         + [Comment(content: "ED")] + ED
-        + [Comment(content: "下集预告")] + nextEpisodePreview
-        + [Comment(content: "JP")]
+        
+    if nextEpisodePreview.count > 0 {
+        orgenizedDialogues += [Comment(content: "下集预告")] + nextEpisodePreview
+    }
+    orgenizedDialogues += [Comment(content: "JP")]
     
     let bundleURL = URL.init(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Documents/Github/SwiftyOpenCC/OpenCCDictionary.bundle")
     let bundle = Bundle.init(url: bundleURL)!
@@ -110,7 +113,7 @@ func orgenizeAssFile(at url: URL) throws {
     let OrgenizedLines = nonDialogueLines + orgenizedDialogueLines
     
     let result = OrgenizedLines.joined(separator: "\r\n")
-    let newFileName = url.deletingPathExtension().appendingPathExtension("new").appendingPathExtension(url.pathExtension).lastPathComponent
-    let fileURL = url.deletingLastPathComponent().appendingPathComponent(newFileName)
+//    let newFileName = url.deletingPathExtension().appendingPathExtension("new").appendingPathExtension(url.pathExtension).lastPathComponent
+    let fileURL = url//.deletingLastPathComponent().appendingPathComponent(newFileName)
     try result.write(to: fileURL, atomically: false, encoding: .utf8)
 }
