@@ -37,6 +37,8 @@ func orgenizeAssFile(at url: URL) throws {
             && !$0.hasPrefix(";")
     }
     
+    // TODO： 清除多余的空行
+    
     let mainDialogueLines = dialogueLines.filter {
         return !$0.contains(",JP,")
             && !$0.contains(",JP(UP),")
@@ -49,9 +51,8 @@ func orgenizeAssFile(at url: URL) throws {
             || $0.contains(",JP(UP),")
     }
     var secondLanguageDialogues = secondLanguageDialogueLines.map { Dialogue(eventLine: $0) }
-    secondLanguageDialogues.sort { d1, d2 -> Bool in
-        return d1.start < d2.start
-    }
+        .filter( { $0.text.count > 0} )
+    secondLanguageDialogues.sort { $0.start < $1.start }
     secondLanguageDialogueLines = secondLanguageDialogues.map { $0.line() }
     
     // TODO: 可以构造一个配置文件，比如 subtitle_config
@@ -63,7 +64,9 @@ func orgenizeAssFile(at url: URL) throws {
     // OP?
     // ED
     // CN
-    let mainDialogues = mainDialogueLines.map { Dialogue(eventLine: $0) }
+    let mainDialogues = mainDialogueLines.map( { Dialogue(eventLine: $0) })
+        .filter( { $0.text.count > 0} )
+        .sorted { $0.start < $1.start }
     
     var OPStart: String?
     var OPEnd: String?
@@ -77,7 +80,7 @@ func orgenizeAssFile(at url: URL) throws {
                 OPStart = dialogue.start
             }
         }
-        else if dialogue.style == "ED" {
+        else if dialogue.style == "ED" {            
             if EDStart == nil {
                 EDStart = dialogue.start
             }
@@ -117,13 +120,14 @@ func orgenizeAssFile(at url: URL) throws {
         + [Comment(content: "OP")] + OP
         + [Comment(content: "正片")] + content
         + [Comment(content: "ED")] + ED
-        
+    
     if nextEpisodePreview.count > 0 {
         orgenizedDialogues += [Comment(content: "下集预告")] + nextEpisodePreview
     }
     orgenizedDialogues += [Comment(content: "JP")]
     
     orgenizedDialogues.forEach { dialogue in
+        // TODO： 移除前后空格
         dialogue.text = ChineseConverter.shared.convert(dialogue.text)
     }
     let orgenizedDialogueLines = orgenizedDialogues.map { $0.line() } + secondLanguageDialogueLines
