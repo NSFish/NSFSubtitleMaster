@@ -10,9 +10,7 @@ import OpenCC
 
 func detectSubtitleFilesIn(directory: URL) throws -> [URL] {
     let items = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: .none, options: .skipsHiddenFiles)
-    let subtitleFiles = items.filter { url -> Bool in
-        return url.pathExtension.lowercased() == "ass"
-    }
+    let subtitleFiles = items.filter { $0.pathExtension.lowercased() == "ass" }.sorted { $0.lastPathComponent < $1.lastPathComponent }
     
     return subtitleFiles
 }
@@ -37,8 +35,7 @@ func organizeAssFile(at url: URL) throws {
             && !$0.hasPrefix(";")
     }
     
-    // TODO： 清除多余的空行
-    
+    // TODO: 清除多余的空行
     let mainDialogueLines = dialogueLines.filter {
         return !$0.contains(",JP,")
             && !$0.contains(",JP(UP),")
@@ -146,4 +143,51 @@ func organizeAssFile(at url: URL) throws {
     }
     try FileManager.default.moveItem(at: url, to: backupURL)
     try result.write(to: url, atomically: false, encoding: .utf8)
+}
+
+func shiftFile(at url: URL, seconds: Double) throws {
+    let subtitle = try String(contentsOf: url)
+    var lines = subtitle.replacingOccurrences(of: "\r\n", with: "\n")
+        .replacingOccurrences(of: "\n", with: "\r\n")
+        .components(separatedBy: "\r\n")
+    
+    var dialogues = [Dialogue]()
+    lines.enumerated().forEach { line in
+        if line.element.hasPrefix("Dialogue:") {
+            let dialogue = Dialogue.init(eventLine: line.element, lineNumber: line.offset)
+            dialogues.append(dialogue)
+        }
+    }
+    
+    dialogues.forEach { dialogue in
+        dialogue.start = shift(time: dialogue.start, seconds: seconds)
+        dialogue.end = shift(time: dialogue.end, seconds: seconds)
+        
+        lines[dialogue.lineNumber] = dialogue.line()
+    }
+    
+    let result = lines.joined(separator: "\r\n")
+    // 修改前的字幕文件备份起来
+    let backupURL = url.appendingPathExtension("backup.ass")
+    if FileManager.default.fileExists(atPath: backupURL.path) {
+        try FileManager.default.removeItem(at: backupURL)
+    }
+    try FileManager.default.moveItem(at: url, to: backupURL)
+    try result.write(to: url, atomically: false, encoding: .utf8)
+}
+
+private func shift(time: String, seconds: Double) -> String {
+    let formatter = DateFormatter()
+    // 大写的 H 表示 24 小时制，否则会出现
+    // before: 0:02:35.01
+    // after: 12:02:33.51
+    // 用 H 而不是 HH，否则会出现
+    // before: 0:02:35.01
+    // after: 00:02:33.51
+    formatter.dateFormat = "H:mm:ss.SS"
+    
+    let newTime = formatter.date(from: time)!.addingTimeInterval(seconds)
+    let result = formatter.string(from: newTime)
+    
+    return result
 }

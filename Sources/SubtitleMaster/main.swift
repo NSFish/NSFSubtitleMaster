@@ -11,19 +11,23 @@ import Foundation
 enum SubtitleMasterError: Error {
     case notSubtitle
     case dummy
+    case illegalShiftSeconds
 }
 
-if CommandLine.arguments.count > 3 {
-    print("Usage: subtitle-master -f");
+if CommandLine.arguments.count > 5 {
+    print("Usage: subtitle-master -d <directory path>/<file path> -s <seconds>");
+    // subtitle-master -f path/to/directory -s <seconds>
 }
 
-var urlString = "", stringToFind = ""
+var urlString = ""
+var stringToFind = ""
+var shiftSecondsString = ""
 for (index, argument) in CommandLine.arguments.enumerated() {
     if (argument == "-d") {
         urlString = CommandLine.arguments[index + 1]
     }
-    else if (argument == "-f") {
-        urlString = CommandLine.arguments[index + 1]
+    else if (argument == "-s") {
+        shiftSecondsString = CommandLine.arguments[index + 1]
     }
 }
 
@@ -36,7 +40,22 @@ do {
             print("在指定路径下没有找到任何 .ass 文件")
         }
         else {
-            try subtitleFiles.forEach { try organizeAssFile(at: $0) }
+            try subtitleFiles.forEach {
+                print("开始处理 " + $0.lastPathComponent + "...")
+                
+                if (shiftSecondsString.count > 0) {
+                    guard let shiftSeconds = Double.init(shiftSecondsString) else {
+                        throw SubtitleMasterError.illegalShiftSeconds
+                    }
+                    
+                    try shiftFile(at: $0, seconds: shiftSeconds)
+                }
+                else {
+                    try organizeAssFile(at: $0)
+                }
+                
+                print("Done.")
+            }
         }
     }
     else {

@@ -10,13 +10,17 @@ import Foundation
 
 class Event {
     
+    class var emptyLineNumber: Int {
+        return INTPTR_MAX
+    }
+    
     class var header: String {
         return ""
     }
         
     let layer: String
-    let start: String
-    let end: String
+    var start: String
+    var end: String
     let style: String
     let name: String
     let marginL: String
@@ -24,8 +28,10 @@ class Event {
     let marginV: String
     let effect: String
     var text: String
+    
+    let lineNumber: Int
 
-    init(eventLine: String){
+    init(eventLine: String, lineNumber: Int = emptyLineNumber){
         let properties = eventLine.components(separatedBy: ",")
         layer = properties[0]
         start = properties[1]
@@ -47,6 +53,8 @@ class Event {
             }
         }
         self.text = text
+        
+        self.lineNumber = lineNumber
     }
     
     func line() -> String {
@@ -58,7 +66,9 @@ class Event {
         }
         
         for property in superClassMirrored.children {
-            array.append(property.value as! String)
+            if let p = property.value as? String {
+                array.append(p)
+            }
         }
         
         return Self.header + array.joined(separator: ",")
@@ -72,9 +82,9 @@ final class Dialogue: Event {
         return "Dialogue: "
     }
 
-    override init(eventLine: String) {
+    override init(eventLine: String, lineNumber: Int = emptyLineNumber){
         let content = eventLine.replacingOccurrences(of: Dialogue.header, with: "")
-        super.init(eventLine: content)
+        super.init(eventLine: content, lineNumber: lineNumber)
     }
 }
 
@@ -97,7 +107,7 @@ final class Comment: Event {
     }
     
     @available(*, unavailable)
-    override init(eventLine: String) {
+    override init(eventLine: String, lineNumber: Int = emptyLineNumber){
         fatalError()
     }
     
