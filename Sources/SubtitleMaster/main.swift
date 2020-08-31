@@ -12,6 +12,8 @@ enum SubtitleMasterError: Error {
     case notSubtitle
     case dummy
     case illegalShiftSeconds
+    case noStyles
+    case noEvents
 }
 
 if CommandLine.arguments.count > 5 {
@@ -59,7 +61,7 @@ do {
         }
     }
     else {
-        try organizeAssFile(at: url)
+        try SubtitlesMaster.parseFile(at: url)
     }
 } catch {
     print("error")
