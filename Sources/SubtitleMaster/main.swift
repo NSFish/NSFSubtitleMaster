@@ -36,11 +36,11 @@ do {
             print("在指定路径下没有找到任何 .ass 文件")
         }
         else {
-            try subtitleFiles.forEach { try orgenizeAssFile(at: $0) }
+            try subtitleFiles.forEach { try organizeAssFile(at: $0) }
         }
     }
     else {
-        try orgenizeAssFile(at: url)
+        try organizeAssFile(at: url)
     }
 } catch {
     print("error")

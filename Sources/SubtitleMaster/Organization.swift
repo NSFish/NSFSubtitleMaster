@@ -17,7 +17,7 @@ func detectSubtitleFilesIn(directory: URL) throws -> [URL] {
     return subtitleFiles
 }
 
-func orgenizeAssFile(at url: URL) throws {
+func organizeAssFile(at url: URL) throws {
     let subtitle = try String(contentsOf: url)
     // 文件中的换行符有的是 \r\n，有的只有 \n，提前做个统一处理
     let lines = subtitle.replacingOccurrences(of: "\r\n", with: "\n")
@@ -116,27 +116,27 @@ func orgenizeAssFile(at url: URL) throws {
     let ED = mainDialogues.filter { $0.start >= EDStart! && $0.start <= EDEnd! }
     let nextEpisodePreview = mainDialogues.filter { $0.start > EDEnd! }
     
-    var orgenizedDialogues = [Comment(content: "Prologue")] + prologue
+    var organizedDialogues = [Comment(content: "Prologue")] + prologue
         + [Comment(content: "OP")] + OP
         + [Comment(content: "正片")] + content
         + [Comment(content: "ED")] + ED
     
     if nextEpisodePreview.count > 0 {
-        orgenizedDialogues += [Comment(content: "下集预告")] + nextEpisodePreview
+        organizedDialogues += [Comment(content: "下集预告")] + nextEpisodePreview
     }
-    orgenizedDialogues += [Comment(content: "JP")]
+    organizedDialogues += [Comment(content: "JP")]
     
-    orgenizedDialogues.forEach { dialogue in
+    organizedDialogues.forEach { dialogue in
         // TODO： 移除前后空格
         dialogue.text = ChineseConverter.shared.convert(dialogue.text)
     }
-    let orgenizedDialogueLines = orgenizedDialogues.map { $0.line() } + secondLanguageDialogueLines
+    let organizedDialogueLines = organizedDialogues.map { $0.line() } + secondLanguageDialogueLines
     
-    let orgenizedLines = nonDialogueLines + orgenizedDialogueLines
+    let organizedLines = nonDialogueLines + organizedDialogueLines
     
     // TODO: 支持替换自定义字符
     // 比如金田一中的 style TITEL -> TITLE
-    let result = orgenizedLines.joined(separator: "\r\n").replacingOccurrences(of: "TITEL", with: "TITLE")
+    let result = organizedLines.joined(separator: "\r\n").replacingOccurrences(of: "TITEL", with: "TITLE")
     // 修改前的字幕文件备份起来，扩展名改成 ssa
     // 这样既可以和新生成的 .ass 文件区分开来，方便地批量删除
     // 又可以直接双击在 VS Code 中打开，方便比对
