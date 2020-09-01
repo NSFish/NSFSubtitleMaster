@@ -10,7 +10,7 @@ import Foundation
 
 class Event {
     
-    class var emptyLineNumber: Int {
+    private class var emptyLineNumber: Int {
         return INTPTR_MAX
     }
     
@@ -31,7 +31,7 @@ class Event {
     
     let lineNumber: Int
 
-    init(eventLine: String, lineNumber: Int = emptyLineNumber){
+    init(eventLine: String, lineNumber: Int){
         let properties = eventLine.components(separatedBy: ",")
         layer = properties[0]
         start = properties[1]
@@ -55,6 +55,10 @@ class Event {
         self.text = text
         
         self.lineNumber = lineNumber
+    }
+    
+    convenience init(eventLine: String) {
+        self.init(eventLine: eventLine, lineNumber: Event.emptyLineNumber)
     }
     
     func line() -> String {
@@ -82,7 +86,7 @@ final class Dialogue: Event {
         return "Dialogue: "
     }
 
-    override init(eventLine: String, lineNumber: Int = emptyLineNumber){
+    override init(eventLine: String, lineNumber: Int){
         let content = eventLine.replacingOccurrences(of: Dialogue.header, with: "")
         super.init(eventLine: content, lineNumber: lineNumber)
     }
@@ -91,6 +95,7 @@ final class Dialogue: Event {
 extension Dialogue: CustomStringConvertible {
     
     var description: String {
+        
         return Self.header + " - layer: " + layer + ", style: " + style + ", text: " + text
     }
 }
@@ -107,12 +112,12 @@ final class Comment: Event {
     }
     
     @available(*, unavailable)
-    override init(eventLine: String, lineNumber: Int = emptyLineNumber){
-        fatalError()
+    override init(eventLine: String, lineNumber: Int){
+        super.init(eventLine: eventLine, lineNumber: lineNumber)
     }
     
-    init(content: String) {
-        super.init(eventLine: "0,0:00:00.00,0:00:00.00,Default,,0,0,0,,"
+    convenience init(content: String) {
+        self.init(eventLine: "0,0:00:00.00,0:00:00.00,Default,,0,0,0,,"
         + Comment.commentSeparator
         + content
         + Comment.commentSeparator)
