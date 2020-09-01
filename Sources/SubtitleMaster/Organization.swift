@@ -148,8 +148,7 @@ func organizeAssFile(at url: URL) throws {
 func shiftFile(at url: URL, seconds: Double) throws {
     let subtitle = try String(contentsOf: url)
     var lines = subtitle.replacingOccurrences(of: "\r\n", with: "\n")
-        .replacingOccurrences(of: "\n", with: "\r\n")
-        .components(separatedBy: "\r\n")
+        .components(separatedBy: "\n")
     
     var dialogues = [Dialogue]()
     lines.enumerated().forEach { line in
@@ -166,7 +165,7 @@ func shiftFile(at url: URL, seconds: Double) throws {
         lines[dialogue.lineNumber] = dialogue.line()
     }
     
-    let result = lines.joined(separator: "\r\n")
+    let result = lines.joined(separator: "\n")
     // 修改前的字幕文件备份起来
     let backupURL = url.appendingPathExtension("backup.ass")
     if FileManager.default.fileExists(atPath: backupURL.path) {
