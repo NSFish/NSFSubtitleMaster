@@ -21,7 +21,7 @@ class Event {
     let layer: String
     var start: String
     var end: String
-    let style: String
+    var style: String
     let name: String
     let marginL: String
     let marginR: String
@@ -96,7 +96,7 @@ extension Dialogue: CustomStringConvertible {
     
     var description: String {
         
-        return Self.header + " - layer: " + layer + ", style: " + style + ", text: " + text
+        return Self.header + "- layer: " + layer + ", style: " + style + ", text: " + text
     }
 }
 

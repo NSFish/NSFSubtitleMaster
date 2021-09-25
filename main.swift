@@ -10,20 +10,21 @@ import Foundation
 
 enum SubtitleMasterError: Error {
     case notSubtitle
-    case dummy
     case illegalShiftSeconds
     case noStyles
     case noEvents
+    case dummy
 }
 
 if CommandLine.arguments.count > 5 {
-    print("Usage: subtitle-master -d <directory path>/<file path> -s <seconds>");
-    // subtitle-master -f path/to/directory -s <seconds>
+    print("Usage: subtitle-master -d <directory path>/<file path> -s <seconds> -config <directory path>/<config file path>");
 }
 
 var urlString = ""
 var stringToFind = ""
 var shiftSecondsString = ""
+var configFilePath = ""
+var globalConfigFilePath = ""
 for (index, argument) in CommandLine.arguments.enumerated() {
     if (argument == "-d") {
         urlString = CommandLine.arguments[index + 1]
@@ -31,11 +32,17 @@ for (index, argument) in CommandLine.arguments.enumerated() {
     else if (argument == "-s") {
         shiftSecondsString = CommandLine.arguments[index + 1]
     }
+    else if (argument == "-config") {
+        configFilePath = CommandLine.arguments[index + 1]
+    }
 }
 
 let url = URL(fileURLWithPath: urlString)
+let configFileURL = URL(fileURLWithPath: configFilePath)
 
 do {
+    let config = try Config.init(url: configFileURL)
+    
     if url.isDirectory {
         let subtitleFiles = try detectSubtitleFilesIn(directory: url)
         if subtitleFiles.count == 0 {
@@ -45,24 +52,21 @@ do {
             try subtitleFiles.forEach {
                 print("开始处理 " + $0.lastPathComponent + "...")
                 
-                if (shiftSecondsString.count > 0) {
-                    guard let shiftSeconds = Double.init(shiftSecondsString) else {
-                        throw SubtitleMasterError.illegalShiftSeconds
-                    }
-                    
-                    try shiftFile(at: $0, seconds: shiftSeconds)
-                }
-                else {
-                    try organizeAssFile(at: $0)
-                }
-                
-                print("Done.")
+                let subtitles = Subtitles.init(url: $0)
+                try subtitles.parse()
+                subtitles.modifyWith(config: config)
+                try subtitles.writeBack()
             }
         }
     }
     else {
-        try SubtitlesMaster.parseFile(at: url)
+        let subtitles = Subtitles.init(url: url)
+        try subtitles.parse()
+        subtitles.modifyWith(config: config)
+        try subtitles.writeBack()
     }
+    
+    print("Done.")
 } catch {
     print("error")
 }
